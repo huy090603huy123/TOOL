@@ -1,0 +1,40 @@
+body {
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    font-family: Arial;
+    color: white;
+}
+
+.container {
+    max-width: 700px;
+    margin: 50px auto;
+}
+
+.card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+input, select, button {
+    width: 100%;
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+}
+
+button.primary {
+    background: #00d2ff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.log {
+    margin-top: 20px;
+    background: black;
+    padding: 15px;
+    height: 200px;
+    overflow: auto;
+    font-family: monospace;
+}
