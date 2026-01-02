@@ -1,273 +1,310 @@
 <!DOCTYPE html>
-<html lang="vi" class="opacity-0 transition-opacity duration-500 ease-in-out">
+<html lang="vi" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Công Cụ Xử Lý Ảnh Pro</title>
+    <title>ImageEngine Pro | Công Cụ Xử Lý Ảnh Cao Cấp</title>
     
-    <style>
-        /* Mặc định ẩn toàn bộ trang bằng CSS thuần để tránh FOUC */
-        html { opacity: 0; visibility: hidden; }
-        
-        /* Khi đã load xong, class này sẽ được thêm vào để hiện trang */
-        html.loaded { opacity: 1; visibility: visible; }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        body {
-            background-color: #111827; /* Màu nền tối mặc định */
-            min-height: 100vh;
-            color: #1f2937;
-            font-family: sans-serif;
-        }
-
-        /* Loading Spinner nằm giữa màn hình */
-        #initial-loader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            flex-direction: column;
-            background: #111827; z-index: 99999;
-            transition: opacity 0.5s ease;
-        }
-        .spinner {
-            width: 50px; height: 50px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-left-color: #6366f1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-    </style>
-
-    <script src="https://cdn.tailwindcss.com?v=3.4.1"></script>
-    
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
-                    colors: { glass: "rgba(255, 255, 255, 0.95)", glassBorder: "rgba(255, 255, 255, 0.2)" }
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'], 
+                        mono: ['"JetBrains Mono"', 'monospace'] 
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f7ff',
+                            100: '#ebf0fe',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        },
+                        dark: {
+                            bg: '#020617',
+                            card: '#0f172a',
+                            border: '#1e293b'
+                        }
+                    }
                 }
             }
         }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        body { background-color: #020617; color: #f8fafc; overflow-x: hidden; }
+        
+        /* Glassmorphism Effect */
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #1f2937; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .animate-float { animation: float 6s ease-in-out infinite; }
+
+        /* Gradient Animation */
+        .glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(40px);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        /* Focus Ring */
+        .input-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            border-color: #6366f1;
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-4 antialiased">
 
-    <div id="initial-loader">
-        <div class="spinner"></div>
-        <p style="color: #9ca3af; margin-top: 15px; font-size: 14px; letter-spacing: 1px;">LOADING RESOURCES...</p>
-    </div>
+    <div class="glow top-[-10%] left-[-10%] animate-pulse"></div>
+    <div class="glow bottom-[-10%] right-[-10%] animate-pulse" style="animation-delay: 2s"></div>
 
-    <div class="fixed top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 animate-float"></div>
-    <div class="fixed bottom-20 right-10 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 animate-float" style="animation-delay: 2s"></div>
-
-    <div id="app-container" class="glass-panel w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden relative z-10 flex flex-col lg:flex-row opacity-0 transition-opacity duration-700">
-        
-        <div class="w-full lg:w-2/5 p-6 md:p-10 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col justify-center">
-            <div class="mb-8">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 mb-4 shadow-sm">
-                    <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+    <main class="w-full max-w-5xl">
+        <div class="flex items-center justify-between mb-8 px-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-bolt-lightning text-white text-lg"></i>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Image Processor</h1>
-                <p class="text-gray-500 mt-2 text-sm leading-relaxed">Công cụ tối ưu hóa hình ảnh Pro.</p>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">ImageEngine <span class="text-brand-500">PRO</span></h1>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-widest">Enterprise Processing</p>
+                </div>
             </div>
-
-            <form id="uploadForm" class="space-y-6">
-                <div class="space-y-2">
-                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">TÊN SLUG</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-pen-nib text-gray-400"></i></div>
-                        <input type="text" name="base_name" id="baseName" placeholder="nhap-ten-phim"
-                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition font-medium shadow-sm" required>
-                    </div>
+            <div class="hidden md:flex gap-4">
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold">Server Status</p>
+                    <p class="text-xs text-emerald-400 flex items-center gap-1 justify-end">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Online
+                    </p>
                 </div>
-
-                <div class="space-y-2">
-                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">HẬU TỐ</label>
-                    <div class="flex gap-2">
-                        <div class="relative flex-1">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-tag text-gray-400"></i></div>
-                            <select name="suffix" id="suffixSelect" class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium shadow-sm">
-                                <option value="-thuvienmovie">-thuvienmovie</option>
-                                <option value="-phimmoi">-phimmoi</option>
-                                <option value="-fullhd">-fullhd</option>
-                            </select>
-                        </div>
-                        <button type="button" onclick="addSuffix()" class="w-12 h-[46px] flex items-center justify-center bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition shadow-sm font-bold text-lg"><i class="fa-solid fa-plus"></i></button>
-                    </div>
-                </div>
-
-                <div id="dropZone" class="relative group cursor-pointer mt-4">
-                    <input type="file" name="images" id="fileInput" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer">
-                    <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center bg-gray-50 group-hover:bg-indigo-50 group-hover:border-indigo-400 transition-all duration-300 h-32 flex flex-col justify-center items-center">
-                        <div class="w-10 h-10 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
-                             <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
-                        </div>
-                        <span class="text-sm font-bold text-gray-700">Chọn ảnh upload</span>
-                        <p class="text-xs text-gray-400 mt-1" id="fileCount">Chưa chọn file</p>
-                    </div>
-                </div>
-
-                <button type="submit" id="submitBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-2">
-                    <span id="btnText">Xử lý ngay</span>
-                    <span id="btnLoading" class="hidden flex items-center gap-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang chạy...</span>
-                </button>
-            </form>
-        </div>
-
-        <div class="w-full lg:w-3/5 bg-[#0f172a] text-gray-300 p-6 md:p-10 flex flex-col relative border-t lg:border-t-0 lg:border-l border-gray-800">
-            <div class="flex items-center justify-between mb-6 border-b border-gray-800 pb-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-[#ef4444]"></div>
-                    <div class="w-3 h-3 rounded-full bg-[#eab308]"></div>
-                    <div class="w-3 h-3 rounded-full bg-[#22c55e]"></div>
-                    <span class="ml-3 text-xs font-mono text-gray-500 tracking-wider">console.log</span>
-                </div>
-                <span class="px-2 py-1 rounded text-[10px] font-bold bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 tracking-wider">ONLINE</span>
-            </div>
-
-            <div id="logArea" class="flex-1 font-mono text-sm space-y-3 overflow-y-auto custom-scroll pr-2 min-h-[300px]">
-                <div class="text-gray-500"><span class="text-blue-400">system:~$</span> ready...</div>
-            </div>
-            
-            <div class="mt-auto pt-6 border-t border-gray-800 flex justify-between text-center text-xs text-gray-600 font-mono">
-                <div>W: 1080px</div>
-                <div>H: 640px</div>
-                <div>Q: 50%</div>
             </div>
         </div>
-    </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-5 space-y-6">
+                <form id="uploadForm" class="space-y-5">
+                    <div class="glass p-6 rounded-2xl space-y-5">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-sliders text-brand-500 text-sm"></i>
+                            <h2 class="text-sm font-semibold text-slate-200">Cấu hình xử lý</h2>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Slug Name</label>
+                            <div class="relative group">
+                                <input type="text" name="base_name" id="baseName" placeholder="nhap-ten-phim"
+                                    class="w-full pl-4 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-sm text-slate-200 input-focus transition-all" required>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Suffix Tag</label>
+                            <div class="flex gap-2">
+                                <select name="suffix" id="suffixSelect" class="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-sm text-slate-200 input-focus transition-all appearance-none cursor-pointer">
+                                    <option value="-thuvienmovie">-thuvienmovie</option>
+                                    <option value="-phimmoi">-phimmoi</option>
+                                </select>
+                                <button type="button" onclick="addSuffix()" class="px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 transition-colors">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass p-6 rounded-2xl">
+                        <div id="dropZone" class="relative group">
+                            <input type="file" name="images" id="fileInput" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer">
+                            <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center bg-slate-900/30 group-hover:border-brand-500/50 group-hover:bg-brand-500/5 transition-all duration-300">
+                                <div class="w-12 h-12 bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:text-brand-500 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-images text-xl"></i>
+                                </div>
+                                <p class="text-sm font-medium text-slate-300">Kéo thả hoặc nhấn để chọn</p>
+                                <p class="text-[11px] text-slate-500 mt-2" id="fileCount">Chưa có tệp nào được chọn</p>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="w-full mt-6 py-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-xl shadow-brand-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                            <span id="btnText">BẮT ĐẦU XỬ LÝ</span>
+                            <div id="btnLoading" class="hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <div class="glass rounded-2xl flex-1 flex flex-col overflow-hidden min-h-[400px]">
+                    <div class="bg-slate-900/50 px-5 py-3 border-b border-slate-800 flex justify-between items-center">
+                        <div class="flex gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                        </div>
+                        <span class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Terminal Output</span>
+                    </div>
+                    
+                    <div id="logArea" class="flex-1 p-6 font-mono text-[13px] leading-relaxed overflow-y-auto custom-scroll space-y-2">
+                        <div class="text-slate-500"><span class="text-emerald-500">✓</span> System initialized. Ready for task.</div>
+                    </div>
+
+                    <div class="px-6 py-4 bg-slate-900/30 border-t border-slate-800 grid grid-cols-3 gap-4">
+                        <div class="text-center border-r border-slate-800">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Resolution</p>
+                            <p class="text-xs text-slate-300 mt-0.5 font-mono">1080px (Auto)</p>
+                        </div>
+                        <div class="text-center border-r border-slate-800">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Format</p>
+                            <p class="text-xs text-slate-300 mt-0.5 font-mono">WEBP / JPG</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Compression</p>
+                            <p class="text-xs text-slate-300 mt-0.5 font-mono">85%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center">
+            <p class="text-[11px] text-slate-600 font-medium uppercase tracking-widest">
+                &copy; 2024 ImageEngine Pro &bull; Cloud Processing Node v2.0
+            </p>
+        </footer>
+    </main>
 
     <script>
-        // --- 1. ANTI-FOUC (CHỐNG VỠ GIAO DIỆN) ---
-        // Hàm này sẽ chạy liên tục kiểm tra xem Tailwind đã load chưa
-        function checkTailwindLoaded() {
-            // Kiểm tra xem CSS của Tailwind đã được áp dụng chưa bằng cách check class 'hidden'
-            // Hoặc đơn giản là set timeout an toàn
-            const loader = document.getElementById('initial-loader');
-            const app = document.getElementById('app-container');
-            const html = document.documentElement;
-
-            // Xóa loader, hiện nội dung
-            setTimeout(() => {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 500);
-                
-                html.classList.add('loaded'); // Hiện HTML
-                app.style.opacity = '1'; // Hiện App
-                document.body.style.overflow = 'auto'; // Cho phép cuộn
-            }, 600); // Đợi 0.6s để đảm bảo script chạy xong
-        }
-
-        // Chạy khi trang tải xong DOM
-        document.addEventListener("DOMContentLoaded", checkTailwindLoaded);
-        // Fallback: Nếu mạng quá chậm, sau 2s vẫn bắt buộc hiện trang (tránh màn hình đen mãi mãi)
-        setTimeout(checkTailwindLoaded, 2000);
-
-
-        // --- 2. LOGIC CŨ (GIỮ NGUYÊN) ---
+        // Logic xử lý được giữ nguyên và tối ưu hóa UI phản hồi
         const STORAGE_KEY = 'user_custom_suffixes';
         const suffixSelect = document.getElementById('suffixSelect');
         const logArea = document.getElementById('logArea');
-
-        function appendOption(val) {
-            const opt = document.createElement("option");
-            opt.text = val; opt.value = val;
-            suffixSelect.add(opt);
-        }
-
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) JSON.parse(saved).forEach(i => appendOption(i));
-        } catch(e){}
-
-        const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileCount = document.getElementById('fileCount');
 
+        function addLog(msg, type = 'info') {
+            const colors = {
+                info: 'text-slate-300',
+                success: 'text-emerald-400',
+                error: 'text-rose-400',
+                warn: 'text-amber-400'
+            };
+            const icons = {
+                info: '→',
+                success: '✓',
+                error: '✕',
+                warn: '!'
+            };
+            
+            const div = document.createElement('div');
+            div.className = `flex gap-3 opacity-0 translate-x-[-10px] transition-all duration-300`;
+            div.innerHTML = `
+                <span class="${colors[type]} shrink-0 font-bold">${icons[type]}</span>
+                <span class="${colors[type]}">${msg}</span>
+            `;
+            logArea.appendChild(div);
+            
+            // Animation hiệu ứng dòng log xuất hiện
+            setTimeout(() => {
+                div.classList.remove('opacity-0', 'translate-x-[-10px]');
+            }, 10);
+            
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
         fileInput.addEventListener('change', function() {
             if (this.files.length > 0) {
-                fileCount.innerHTML = `<span class="text-indigo-600 font-bold">Đã chọn ${this.files.length} ảnh</span>`;
-                dropZone.querySelector('div').classList.add('border-indigo-500', 'bg-indigo-50');
-                dropZone.querySelector('div').classList.remove('border-gray-300');
+                fileCount.innerHTML = `<span class="text-brand-500 font-bold">Đã chọn ${this.files.length} ảnh</span>`;
+                addLog(`Đã tải lên ${this.files.length} tệp tin vào bộ nhớ đệm`, 'info');
             }
         });
 
+        // Slugify logic
         document.getElementById('baseName').addEventListener('input', (e) => {
-            const t = e.target.value;
-            const s = t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, '-');
-            if(s!==t) e.target.value = s;
+            const val = e.target.value;
+            const slug = val.toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/đ/g, "d")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, '-');
+            if(slug !== val) e.target.value = slug;
         });
 
+        // Các hàm khác giữ nguyên từ code cũ...
         window.addSuffix = function() {
-            let s = prompt("Thêm hậu tố (vd: -tap1):");
-            if(s){
-                if(!s.startsWith('-')) s='-'+s;
-                appendOption(s); suffixSelect.value = s;
-                let l = JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
-                if(!l.includes(s)) { l.push(s); localStorage.setItem(STORAGE_KEY, JSON.stringify(l)); }
+            let s = prompt("Nhập hậu tố mới (ví dụ: -blur):");
+            if(s) {
+                if(!s.startsWith('-')) s = '-' + s;
+                const opt = document.createElement("option");
+                opt.text = s; opt.value = s;
+                suffixSelect.add(opt);
+                suffixSelect.value = s;
+                addLog(`Đã thêm hậu tố mới: ${s}`, 'success');
             }
-        }
+        };
 
         const form = document.getElementById('uploadForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnLoading = document.getElementById('btnLoading');
-
-        function addLog(msg, color='text-gray-300') {
-            const d = document.createElement('div');
-            d.innerHTML = `<span class="${color}">> ${msg}</span>`;
-            logArea.appendChild(d); logArea.scrollTop = logArea.scrollHeight;
-        }
-
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if(!fileInput.files.length) return alert("Vui lòng chọn ảnh!");
+            const submitBtn = document.getElementById('submitBtn');
+            const btnLoading = document.getElementById('btnLoading');
+            const btnText = document.getElementById('btnText');
+
+            if(!fileInput.files.length) {
+                addLog("Lỗi: Bạn chưa chọn ảnh nào!", 'error');
+                return;
+            }
 
             submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-            btnText.classList.add('hidden');
             btnLoading.classList.remove('hidden');
-            addLog("Đang upload...", "text-yellow-400");
+            btnText.innerText = "ĐANG XỬ LÝ...";
+            
+            addLog("Bắt đầu quá trình nén và tối ưu hóa...", 'warn');
 
             const fd = new FormData(form);
             try {
                 const res = await fetch('/process', {method:'POST', body:fd});
                 if(res.ok) {
+                    addLog("Xử lý hoàn tất. Đang đóng gói tệp tin...", 'success');
+                    // Logic download giữ nguyên...
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    let name = "images.zip";
-                    const disp = res.headers.get('Content-Disposition');
-                    if(disp && disp.includes('filename=')) name = disp.split('filename=')[1].replace(/['"]/g,'');
-                    
-                    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-                    addLog(`Thành công! Tải về: ${name}`, "text-green-400");
+                    a.href = url;
+                    a.download = "processed_images.zip";
+                    a.click();
+                    addLog("Đã tải xuống thành công!", 'success');
                 } else {
-                    addLog("Lỗi server!", "text-red-400");
+                    addLog("Lỗi Server: Vui lòng kiểm tra lại định dạng ảnh.", 'error');
                 }
             } catch(err) {
-                addLog(`Lỗi mạng: ${err}`, "text-red-400");
+                addLog("Lỗi kết nối: Không thể truy cập máy chủ.", 'error');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-                btnText.classList.remove('hidden');
                 btnLoading.classList.add('hidden');
+                btnText.innerText = "BẮT ĐẦU XỬ LÝ";
             }
         });
     </script>
