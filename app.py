@@ -7,8 +7,11 @@ from PIL import Image
 
 app = Flask(__name__)
 
-# --- CẤU HÌNH ---
-QUALITY_PERCENT = 50
+# --- CẤU HÌNH QUAN TRỌNG ĐÃ SỬA ---
+# Cho phép tải lên tối đa 500MB (Giải quyết lỗi khi up nhiều ảnh)
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024 
+
+QUALITY_PERCENT = 80  # Tăng lên 80 để ảnh đẹp hơn chút (mặc định 50 hơi thấp)
 TARGET_WIDTH_NGANG = 1080
 TARGET_WIDTH_DOC = 640
 DINH_DANG_ANH_HOP_LE = ('.png', '.gif', '.bmp', '.tiff', '.webp', '.heic', '.heif', '.ico', '.jpg', '.jpeg')
@@ -42,6 +45,9 @@ def process_images():
         base_name_raw = request.form.get('base_name', 'untitled')
         suffix = request.form.get('suffix', '-thuvienmovie')
         
+        if not uploaded_files:
+            return jsonify({"error": "Không có file nào được gửi lên"}), 400
+
         # Xử lý input
         base_name = format_as_slug(base_name_raw)
         if not suffix.startswith('-'): suffix = '-' + suffix
@@ -50,7 +56,6 @@ def process_images():
         memory_file = io.BytesIO()
         
         processed_count = 0
-        logs = []
 
         with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
             stt = 1
@@ -59,6 +64,7 @@ def process_images():
                 
                 ext = os.path.splitext(file.filename)[1].lower()
                 if ext not in DINH_DANG_ANH_HOP_LE:
+                    print(f"Skipping format: {ext}")
                     continue
 
                 try:
@@ -96,6 +102,9 @@ def process_images():
                 except Exception as e:
                     print(f"Error processing {file.filename}: {e}")
 
+        if processed_count == 0:
+            return jsonify({"error": "Không xử lý được ảnh nào (lỗi định dạng hoặc file hỏng)"}), 400
+
         memory_file.seek(0)
         
         response = send_file(
@@ -104,12 +113,13 @@ def process_images():
             as_attachment=True,
             download_name=f'{base_name}-processed.zip'
         )
-        # Header log để JS đọc
         response.headers["X-Process-Log"] = str(processed_count)
         return response
 
     except Exception as e:
+        print(f"Server Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Chạy host 0.0.0.0 để có thể test từ thiết bị khác trong LAN
+    app.run(debug=True, host='0.0.0.0', port=5000)

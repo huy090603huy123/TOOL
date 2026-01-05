@@ -69,13 +69,6 @@
             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
             border-color: #6366f1;
         }
-
-        .shimmer {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite;
-        }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 antialiased">
@@ -177,11 +170,11 @@
                         </div>
                         <div class="text-center border-r border-slate-800">
                             <p class="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Format</p>
-                            <p class="text-xs text-slate-300 mt-0.5 font-mono">WEBP / JPG</p>
+                            <p class="text-xs text-slate-300 mt-0.5 font-mono">JPG Optimized</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Compression</p>
-                            <p class="text-xs text-slate-300 mt-0.5 font-mono">85%</p>
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Quality</p>
+                            <p class="text-xs text-slate-300 mt-0.5 font-mono">80%</p>
                         </div>
                     </div>
                 </div>
@@ -196,8 +189,6 @@
     </main>
 
     <script>
-        // Logic xử lý được giữ nguyên và tối ưu hóa UI phản hồi
-        const STORAGE_KEY = 'user_custom_suffixes';
         const suffixSelect = document.getElementById('suffixSelect');
         const logArea = document.getElementById('logArea');
         const fileInput = document.getElementById('fileInput');
@@ -225,7 +216,6 @@
             `;
             logArea.appendChild(div);
             
-            // Animation hiệu ứng dòng log xuất hiện
             setTimeout(() => {
                 div.classList.remove('opacity-0', 'translate-x-[-10px]');
             }, 10);
@@ -240,7 +230,6 @@
             }
         });
 
-        // Slugify logic
         document.getElementById('baseName').addEventListener('input', (e) => {
             const val = e.target.value;
             const slug = val.toLowerCase()
@@ -252,7 +241,6 @@
             if(slug !== val) e.target.value = slug;
         });
 
-        // Các hàm khác giữ nguyên từ code cũ...
         window.addSuffix = function() {
             let s = prompt("Nhập hậu tố mới (ví dụ: -blur):");
             if(s) {
@@ -281,26 +269,36 @@
             btnLoading.classList.remove('hidden');
             btnText.innerText = "ĐANG XỬ LÝ...";
             
-            addLog("Bắt đầu quá trình nén và tối ưu hóa...", 'warn');
+            addLog("Đang gửi dữ liệu lên server (Có thể mất vài giây nếu file nặng)...", 'warn');
 
             const fd = new FormData(form);
             try {
                 const res = await fetch('/process', {method:'POST', body:fd});
+                
                 if(res.ok) {
-                    addLog("Xử lý hoàn tất. Đang đóng gói tệp tin...", 'success');
-                    // Logic download giữ nguyên...
+                    addLog("Server xử lý thành công! Đang tải về...", 'success');
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = "processed_images.zip";
                     a.click();
-                    addLog("Đã tải xuống thành công!", 'success');
+                    addLog("Hoàn tất quy trình.", 'success');
                 } else {
-                    addLog("Lỗi Server: Vui lòng kiểm tra lại định dạng ảnh.", 'error');
+                    if (res.status === 413) {
+                         addLog("LỖI: Tổng dung lượng ảnh quá lớn (>500MB). Vui lòng chia nhỏ số lượng ảnh.", 'error');
+                    } else {
+                        try {
+                            const errData = await res.json();
+                            addLog(`Lỗi Server: ${errData.error}`, 'error');
+                        } catch(e) {
+                            addLog(`Lỗi HTTP ${res.status}: ${res.statusText}`, 'error');
+                        }
+                    }
                 }
             } catch(err) {
                 addLog("Lỗi kết nối: Không thể truy cập máy chủ.", 'error');
+                console.error(err);
             } finally {
                 submitBtn.disabled = false;
                 btnLoading.classList.add('hidden');
