@@ -9,13 +9,16 @@ from PIL import Image, ImageEnhance
 app = Flask(__name__)
 
 # --- CẤU HÌNH ---
-# Cho phép upload tối đa 500MB
-app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024 
+# SỬA LỖI 1: Tăng giới hạn upload từ 500MB lên 2GB (2048 MB)
+# Bạn có thể tăng số 2048 lên cao hơn nữa nếu muốn (ví dụ 5120 cho 5GB)
+app.config['MAX_CONTENT_LENGTH'] = 2048 * 1024 * 1024 
 
 # CẤU HÌNH ẢNH ĐẦU RA
 QUALITY_PERCENT = 85      # 85: Điểm cân bằng vàng giữa dung lượng thấp và mắt nhìn thấy đẹp
 SHARPNESS_FACTOR = 1.3    # 1.0 là gốc. 1.2 giúp ảnh nét hơn sau khi bị resize nhỏ lại
-TARGET_WIDTH_NGANG = 1280 # Kích thước cho ảnh ngang
+
+# SỬA LỖI 2: Đổi kích thước từ 1280 thành 1080
+TARGET_WIDTH_NGANG = 1080 # Kích thước cho ảnh ngang
 TARGET_WIDTH_DOC = 640    # Kích thước cho ảnh dọc
 DINH_DANG_ANH_HOP_LE = ('.png', '.gif', '.bmp', '.tiff', '.webp', '.heic', '.heif', '.ico', '.jpg', '.jpeg')
 
@@ -116,7 +119,7 @@ def process_images():
                         quality=QUALITY_PERCENT, # 85%
                         optimize=True,           # Nén sâu cấu trúc file
                         progressive=True,        # Tải dần trên web
-                        subsampling=0            # Giữ nguyên thông tin màu (4:4:4) -> Nét căng, không bị loang lổ
+                        subsampling=0            # Giữ nguyên thông tin màu (4:4:4) -> Nét căng
                     )
                     img_byte_arr.seek(0)
 
