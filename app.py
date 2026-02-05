@@ -3,23 +3,24 @@ import re
 import io
 import zipfile
 from flask import Flask, render_template, request, send_file, jsonify
-# Thêm ImageEnhance để xử lý làm nét ảnh
 from PIL import Image, ImageEnhance 
 
 app = Flask(__name__)
 
 # --- CẤU HÌNH ---
-# SỬA LỖI 1: Tăng giới hạn upload từ 500MB lên 2GB (2048 MB)
-# Bạn có thể tăng số 2048 lên cao hơn nữa nếu muốn (ví dụ 5120 cho 5GB)
 app.config['MAX_CONTENT_LENGTH'] = 2048 * 1024 * 1024 
 
 # CẤU HÌNH ẢNH ĐẦU RA
-QUALITY_PERCENT = 85      # 85: Điểm cân bằng vàng giữa dung lượng thấp và mắt nhìn thấy đẹp
-SHARPNESS_FACTOR = 1.3    # 1.0 là gốc. 1.2 giúp ảnh nét hơn sau khi bị resize nhỏ lại
+QUALITY_PERCENT = 85      
+SHARPNESS_FACTOR = 1.3    
 
-# SỬA LỖI 2: Đổi kích thước từ 1280 thành 1080
-TARGET_WIDTH_NGANG = 1080 # Kích thước cho ảnh ngang
-TARGET_WIDTH_DOC = 640    # Kích thước cho ảnh dọc
+# Kích thước mặc định
+TARGET_WIDTH_NGANG = 1080 
+TARGET_WIDTH_DOC = 640    
+
+# Kích thước tùy chọn mới
+TARGET_WIDTH_OPTION = 1280 
+
 DINH_DANG_ANH_HOP_LE = ('.png', '.gif', '.bmp', '.tiff', '.webp', '.heic', '.heif', '.ico', '.jpg', '.jpeg')
 
 # --- HÀM XỬ LÝ TÊN FILE (SLUG) ---
@@ -42,7 +43,6 @@ def format_as_slug(text):
 
 @app.route('/')
 def index():
-    # Yêu cầu phải có file templates/index.html
     return render_template('index.html')
 
 @app.route('/process', methods=['POST'])
@@ -52,6 +52,10 @@ def process_images():
         base_name_raw = request.form.get('base_name', 'untitled')
         suffix = request.form.get('suffix', '-thuvienmovie')
         
+        # --- BỔ SUNG: Kiểm tra xem người dùng có tick chọn 1280px không ---
+        # Nếu checkbox được tick, biến này sẽ là True
+        use_1280_mode = 'resize_1280' in request.form 
+
         if not uploaded_files:
             return jsonify({"error": "Không có file nào được gửi lên"}), 400
 
@@ -82,13 +86,19 @@ def process_images():
                     new_width, new_height = width, height
                     needs_resize = False
 
-                    # Logic: Chỉ resize nhỏ đi, không phóng to (để tránh vỡ ảnh)
+                    # Logic: Chỉ resize nhỏ đi, không phóng to
+                    
                     if width > height: # Ảnh Ngang
-                        if width > TARGET_WIDTH_NGANG:
-                            new_width = TARGET_WIDTH_NGANG
+                        # Nếu chọn mode 1280 thì dùng 1280, không thì dùng 1080
+                        target_w = TARGET_WIDTH_OPTION if use_1280_mode else TARGET_WIDTH_NGANG
+                        
+                        if width > target_w:
+                            new_width = target_w
                             new_height = int((new_width / width) * height)
                             needs_resize = True
                     else: # Ảnh Dọc hoặc Vuông
+                        # Ảnh dọc thường giữ nguyên 640px kể cả khi chọn mode 1280 
+                        # (trừ khi bạn muốn ảnh dọc cũng to lên thì sửa dòng dưới thành TARGET_WIDTH_OPTION)
                         if width > TARGET_WIDTH_DOC:
                             new_width = TARGET_WIDTH_DOC
                             new_height = int((new_width / width) * height)
@@ -96,15 +106,13 @@ def process_images():
                     
                     # Thực hiện Resize
                     if needs_resize:
-                        # LANCZOS: Thuật toán tốt nhất để giữ chi tiết khi thu nhỏ
                         img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-                    # Chuyển đổi hệ màu (đề phòng ảnh trong suốt PNG hoặc hệ màu lạ)
+                    # Chuyển đổi hệ màu
                     if img.mode in ("RGBA", "P"):
                         img = img.convert('RGB')
 
                     # --- BƯỚC 2: TĂNG ĐỘ NÉT (SHARPEN) ---
-                    # Giúp ảnh trông sắc nét hơn sau khi nén
                     enhancer = ImageEnhance.Sharpness(img)
                     img = enhancer.enhance(SHARPNESS_FACTOR)
 
@@ -116,10 +124,10 @@ def process_images():
                     img.save(
                         img_byte_arr, 
                         format='JPEG', 
-                        quality=QUALITY_PERCENT, # 85%
-                        optimize=True,           # Nén sâu cấu trúc file
-                        progressive=True,        # Tải dần trên web
-                        subsampling=0            # Giữ nguyên thông tin màu (4:4:4) -> Nét căng
+                        quality=QUALITY_PERCENT,
+                        optimize=True,          
+                        progressive=True,       
+                        subsampling=0           
                     )
                     img_byte_arr.seek(0)
 
@@ -133,7 +141,7 @@ def process_images():
                     print(f"Lỗi khi xử lý file {file.filename}: {e}")
 
         if processed_count == 0:
-            return jsonify({"error": "Không xử lý được ảnh nào (lỗi định dạng hoặc file hỏng)"}), 400
+            return jsonify({"error": "Không xử lý được ảnh nào"}), 400
 
         memory_file.seek(0)
         
@@ -143,7 +151,6 @@ def process_images():
             as_attachment=True,
             download_name=f'{base_name}-processed.zip'
         )
-        # Header trả về số lượng ảnh đã xử lý (để client biết nếu cần)
         response.headers["X-Process-Log"] = str(processed_count)
         return response
 
@@ -152,5 +159,4 @@ def process_images():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Host 0.0.0.0 để truy cập được từ các máy khác trong cùng mạng LAN
     app.run(debug=True, host='0.0.0.0', port=5000)
